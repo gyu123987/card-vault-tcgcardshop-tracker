@@ -223,7 +223,7 @@ function placeOverlay(pop,anchor){
  Object.assign(pop.style,{position:'fixed',right:'auto',bottom:'auto',maxWidth:Math.max(0,width-2*margin)+'px',maxHeight:Math.max(0,height-2*margin)+'px'});
  const above=Math.max(0,r.top-top-margin-gap),below=Math.max(0,top+height-r.bottom-margin-gap),natural=pop.getBoundingClientRect().height;
  const up=natural>below&&above>below,space=up?above:below;
- pop.style.maxHeight=Math.max(0,space)+'px';
+ pop.style.maxHeight=Math.max(0,Math.min(space,height-2*margin))+'px';
  const box=pop.getBoundingClientRect();
  pop.style.left=Math.max(left+margin,Math.min(r.left,left+width-box.width-margin))+'px';
  pop.style.top=Math.max(top+margin,Math.min(up?r.top-gap-box.height:r.bottom+gap,top+height-box.height-margin))+'px';
