@@ -16,4 +16,4 @@ Validated on the development Windows PC using a fresh extraction of the portable
 
 Windows screenshot capture for the native launcher timed out; its controls, progress log and Open/Retrieve actions were verified through Windows accessibility and keyboard input. Browser rendering was visually inspected. The package is unsigned.
 
-GitHub release publication and the live new-release notification must be verified after repository/workflow authorization and first publication. The offline/no-release update path was exercised without preventing local use.
+GitHub-hosted Windows tests and the clean package build passed. The v0.1.0 tag successfully published the ZIP and SHA-256 file. The actual published download passed checksum verification and a private-content audit. The offline/no-release update path was exercised without preventing local use. A notification for a newer-than-installed version requires a future release to validate end to end.
