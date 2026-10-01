@@ -4,7 +4,7 @@ Open an issue or pull request with a focused change and relevant validation. The
 
 Run `npm test` and `python -m unittest discover -s tests -p test_asset_setup.py`. For a UI change, check both desktop and narrow layouts. Tests must use fixtures or temporary app-data directories, never write into real game saves.
 
-Never commit extracted game assets, save files, local catalog/history/drafts, screenshots showing game art or private state, API keys or packaged binaries. Retrieve game content locally from a legally installed game.
+Never commit extracted game assets, save files, local catalog/history/drafts, unapproved screenshots showing game art or private state, API keys or packaged binaries. Retrieve game content locally from a legally installed game.
 
 ## Releases
 
