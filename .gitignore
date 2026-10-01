@@ -1,0 +1,15 @@
+.tools/
+data/
+public/assets/
+__pycache__/
+*.log
+
+# Local paths, environments, and screenshots containing extracted game art
+.venv/
+.env
+.env.*
+!.env.example
+docs/*.png
+docs/*.PNG
+*.zip
+dist/

@@ -1,0 +1,34 @@
+CARD VAULT — WINDOWS 64-BIT
+
+1. Extract the entire ZIP to a folder. Do not run the EXE inside the ZIP.
+2. Double-click Card Vault.exe.
+3. Check the detected game installation and save folders.
+4. Click Retrieve / refresh assets on first use. This can take several minutes.
+5. Click Open Card Vault. The tracker opens in your default browser.
+
+No Node.js, Python, terminal, or administrator installation is required.
+Keep the launcher open while using the tracker. Closing it stops the local server.
+You can create a Windows shortcut to Card Vault.exe for quick access.
+
+Own and install TCG Card Shop Simulator first. The package contains no game
+artwork, save files, personal history, or sample decks. Assets are read from
+your installed game. Game saves are never modified. After a game update,
+click Retrieve / refresh assets again, then reopen the tracker.
+
+Your data is stored in %LOCALAPPDATA%\CardVault, separately from this app.
+Use Open my Card Vault data folder in the launcher to back up your data.
+Replacing the application folder does not remove your data. If migrating
+from the source version, close both launchers and copy drafts.json,
+deck-covers.json and snapshots.json from its data folder into the new data
+folder. Do not overwrite existing records without keeping a backup.
+
+This preview is unsigned. No game-save migration or cloud upload happens.
+Windows x64 only; a future game update may require an extractor update.
+The .NET Framework supplied with Windows 10/11 is used for the launcher.
+
+UPDATES
+The launcher checks this project's public GitHub Releases at startup.
+If a new version is available, use Download to open its release page.
+Extract the entire new ZIP, close the old launcher and run the new EXE.
+Your personal data stays in LocalAppData/CardVault and is reused.
+No GitHub account or API key is needed; offline use continues normally.

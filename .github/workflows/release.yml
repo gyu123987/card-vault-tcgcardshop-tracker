@@ -1,0 +1,42 @@
+name: Windows release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check release version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ('${{ github.ref_type }}' -eq 'tag' -and '${{ github.ref_name }}' -ne "v$version") { throw 'Tag must match package.json version' }
+      - run: npm test
+      - run: python -m unittest discover -s tests -p test_asset_setup.py
+      - name: Build portable app
+        shell: powershell
+        run: ./desktop/Build-Windows.ps1 -PythonCommand python
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CardVault-Windows
+          path: |
+            dist/CardVault-Windows.zip
+            dist/CardVault-Windows.sha256
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create ${{ github.ref_name }} dist/CardVault-Windows.zip dist/CardVault-Windows.sha256 --verify-tag --title "Card Vault ${{ github.ref_name }}" --generate-notes
