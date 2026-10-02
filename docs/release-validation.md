@@ -17,3 +17,8 @@ Validated on the development Windows PC using a fresh extraction of the portable
 Windows screenshot capture for the native launcher timed out; its controls, progress log and Open/Retrieve actions were verified through Windows accessibility and keyboard input. Browser rendering was visually inspected. The package is unsigned.
 
 GitHub-hosted Windows tests and the clean package build passed. The v0.1.0 tag successfully published the ZIP and SHA-256 file. The actual published download passed checksum verification and a private-content audit. The offline/no-release update path was exercised without preventing local use. The publicly downloaded EXE was launched against the isolated test data and reported "Card Vault 0.1.0 is up to date" from live public GitHub release metadata, with no embedded token. A notification for a newer-than-installed version requires a future release to validate end to end.
+
+## Same-version refresh — October 1, 2026
+
+60 Node tests cover collection bucket reconciliation, shop expansion tiers, merchandise locations and market-price rounding, missing catalog data, and itemized net-worth totals. The economy extractor was run against the local installation. Browser checks verified the named merchandise drilldown, quantity/unit/total columns, and the hover-triggered rainbow-wave animation. Valuation assumptions are documented in [Net worth](valuation.md).
+

@@ -91,4 +91,4 @@ Switch set values between bars and a pie chart, include or exclude graded value,
 
 Screenshots above were supplied for this project’s feature tour. Card artwork belongs to its respective creators. Foil lighting and pack forecasts are approximations; graded pack forecasts count candidate copies, not guaranteed PSA outcomes. The Windows app is currently unsigned, and an in-game deck-import round trip has not yet been manually verified.
 
-[Setup and data reference](docs/reference.md) · [Deck tracking](docs/deck-tracking.md) · [Grading calculations](docs/grading-and-analytics.md) · [Pack odds](docs/pack-estimates.md) · [Release process](CONTRIBUTING.md#releases) · [Validation](docs/release-validation.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+[Setup and data reference](docs/reference.md) · [Net worth](docs/valuation.md) · [Deck tracking](docs/deck-tracking.md) · [Grading calculations](docs/grading-and-analytics.md) · [Pack odds](docs/pack-estimates.md) · [Release process](CONTRIBUTING.md#releases) · [Validation](docs/release-validation.md) · [Third-party notices](THIRD_PARTY_NOTICES.md)

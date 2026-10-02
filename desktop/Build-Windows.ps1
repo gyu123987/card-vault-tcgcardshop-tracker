@@ -37,7 +37,7 @@ $app=Join-Path $package 'app'
 New-Item -ItemType Directory -Force -Path "$app\public","$app\tools" | Out-Null
 foreach($name in @('server.mjs','package.json','lib')) { Copy-Item -LiteralPath (Join-Path $vaultRoot $name) -Destination $app -Recurse }
 foreach($name in @('app.js','card-renderer.js','index.html','style.css','fonts')) { Copy-Item -LiteralPath (Join-Path $vaultRoot "public\$name") -Destination "$app\public" -Recurse }
-foreach($name in @('retrieve_assets.py','extract_catalog.py','render_assets.py')) { Copy-Item -LiteralPath (Join-Path $vaultRoot "tools\$name") -Destination "$app\tools" }
+foreach($name in @('retrieve_assets.py','extract_catalog.py','render_assets.py','economy_assets.py')) { Copy-Item -LiteralPath (Join-Path $vaultRoot "tools\$name") -Destination "$app\tools" }
 Copy-Item -LiteralPath (Join-Path $vaultRoot 'THIRD_PARTY_NOTICES.md') -Destination $package
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'START-HERE.txt') -Destination $package
 $version=(Get-Content -LiteralPath (Join-Path $vaultRoot 'package.json') | ConvertFrom-Json).version

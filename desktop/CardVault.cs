@@ -61,7 +61,7 @@ class CardVault : Form {
         Shown+=async(s,e)=>{
             var updateTask=CheckUpdates();
             if(game.Text.Length==0){try {var found=await RunPython("--detect-only",false);if(found.Trim().Length>0)game.Text=found.Trim();}catch {Write("Choose the folder containing Card Shop Simulator_Data.");}}
-            Write(CacheReady()?"Ready. Click Open Card Vault. Refresh assets after a game update.":"First run: click Retrieve / refresh assets. No downloads or coding tools are needed.");
+            Write(CacheReady()?"Ready. Click Open Card Vault. Refresh assets after a game update.":"Setup or asset refresh needed. Click Retrieve / refresh assets to include artwork and net-worth prices.");
         };
         FormClosing+=(s,e)=>{if(working){MessageBox.Show("Wait for asset retrieval to finish before closing.","Card Vault");e.Cancel=true;}else StopServer();};
     }
@@ -95,7 +95,15 @@ class CardVault : Form {
     }
     string ReadSetting(string file){var p=Path.Combine(store,file);return File.Exists(p)?File.ReadAllText(p):"";}
     void Settings(){File.WriteAllText(Path.Combine(store,"game-folder.txt"),game.Text.Trim());File.WriteAllText(Path.Combine(store,"save-folder.txt"),saves.Text.Trim());}
-    bool CacheReady(){return File.Exists(Path.Combine(store,"data/catalog.json"))&&File.Exists(Path.Combine(store,"public/assets/render-data.json"));}
+    bool CacheReady(){
+        if(!File.Exists(Path.Combine(store,"data/catalog.json"))||!File.Exists(Path.Combine(store,"public/assets/render-data.json")))return false;
+        try {
+            var json=new JavaScriptSerializer {MaxJsonLength=32*1024*1024};
+            var catalog=json.Deserialize<Dictionary<string,object>>(File.ReadAllText(Path.Combine(store,"data/catalog.json")));
+            var economy=catalog.ContainsKey("economy")?catalog["economy"] as Dictionary<string,object>:null;
+            return economy!=null&&economy.ContainsKey("items");
+        }catch {return false;}
+    }
     void Write(string text){if(IsDisposed||String.IsNullOrWhiteSpace(text))return;if(InvokeRequired){BeginInvoke(new Action<string>(Write),text);return;}log.AppendText(text+Environment.NewLine);}
     static string Quote(string s){return "\""+s.Replace("\"", "") .TrimEnd('\\')+"\"";}
     async Task<string> RunPython(string args,bool show) {

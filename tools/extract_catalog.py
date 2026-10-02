@@ -73,6 +73,9 @@ for expansion,name,suffix,shown,data,isDestiny in sets:
    variant_name=(['Base','Silver','Gold','Silver Full Art','EX Full Art','Borderless Full Art'][border] if expansion==7 else borders[border])
    cards.append({'id':f'{sid}:{pos*count+v}','setId':sid,'set':name,'expansion':expansion,'isDestiny':isDestiny,'saveIndex':pos*count+v,'monsterId':mid,'baseId':str(mid),'name':m['Name'],'description':re.sub('<[^>]+>','',desc),'rarity':['Common','Rare','Epic','Legendary'][m['Rarity']] if m['Rarity']<4 else str(m['Rarity']),'rarityIndex':m['Rarity'],'number':pos*count+v+1,'cardNumber':pos+1,'variant':('Ghost' if expansion==2 else variant_name)+(' Foil' if foil else ''),'border':border,'foil':foil,'art':export(icon),'background':export(bg),'artist':m['ArtistNameList'][min(setting['artistNameIndex'],len(m['ArtistNameList'])-1)] if m['ArtistNameList'] else m['ArtistName'],'stats':{k:m['BaseStats'][k] for k in ['FireElement','EarthElement','WaterElement','WindElement']},'previousEvolution':m['PreviousEvolution'],'previousName':monsters.get(m['PreviousEvolution'],{}).get('Name',''),'previousArt':export(monsters.get(m['PreviousEvolution'],{}).get('Icon')),'renderStyle':f'{expansion}:{style_index}','elementIndex':m['ElementIndex']})
 (OUTPUT/'data').mkdir(exist_ok=True)
-(OUTPUT/'data/catalog.json').write_text(json.dumps({'sets':setinfo,'cards':cards,'source':'Local game assets','unityVersion':'2021.3.38f1'},ensure_ascii=False),encoding='utf-8')
+from economy_assets import extract_economy
+scene = UnityPy.load(str(game/'level1'));scene.typetree_generator=gen
+economy = extract_economy(env, fix, scene)
+(OUTPUT/'data/catalog.json').write_text(json.dumps({'sets':setinfo,'cards':cards,'economy':economy,'source':'Local game assets','unityVersion':'2021.3.38f1'},ensure_ascii=False),encoding='utf-8')
 if errors: raise RuntimeError('Asset extraction failed; no cache should be published: '+ '; '.join(errors[:10]))
 print(json.dumps({'cards':len(cards),'images':sum(bool(v) for v in cache.values()),'errors':errors[:10]}))

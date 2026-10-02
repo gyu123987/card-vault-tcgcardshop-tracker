@@ -61,7 +61,7 @@ const server=http.createServer(async(req,res)=>{
   const match=url.pathname.match(/^\/api\/drafts\/([\w-]+)(\/export)?$/);
   if(match){return send(await mutate(async()=>{const d=drafts.find(d=>d.id===match[1]&&d.profile===activeFile);if(!d)throw Error('Draft not found.');if(req.method==='DELETE'&&!match[2]){drafts=drafts.filter(x=>x.id!==d.id);await atomic('drafts.json',drafts);return payload();}if(req.method==='POST'&&match[2]){const text=exportDeck(d,state.cards);d.exportedAt=new Date().toISOString();d.status=d.status==='in-game'?'in-game':'exported';await atomic('drafts.json',drafts);return {text};}throw Error('Unsupported operation');}));}
   if(req.method!=='GET')return send({error:'Not found'},404);
-  if(['/lib/model.mjs','/lib/analytics.mjs'].includes(url.pathname)){res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-cache'});return res.end(await fs.readFile(path.join(root,url.pathname.slice(1))));}
+  if(['/lib/model.mjs','/lib/analytics.mjs','/lib/valuation.mjs'].includes(url.pathname)){res.writeHead(200,{'Content-Type':'text/javascript','Cache-Control':'no-cache'});return res.end(await fs.readFile(path.join(root,url.pathname.slice(1))));}
   const externalAssets=url.pathname.startsWith('/assets/')&&process.env.TCG_ASSET_DIR;
   const publicRoot=externalAssets?path.resolve(process.env.TCG_ASSET_DIR):path.join(root,'public'),file=path.resolve(publicRoot,'.'+decodeURIComponent(externalAssets?url.pathname.slice('/assets'.length):url.pathname==='/'?'/index.html':url.pathname));
   if(!file.startsWith(publicRoot+path.sep))return send({error:'Not found'},404);
