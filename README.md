@@ -14,8 +14,10 @@ Both paths require Windows, a locally installed copy of TCG Card Shop Simulator,
 
 1. Download **CardVault-Windows.zip** from [Releases](https://github.com/gyu123987/card-vault-tcgcardshop-tracker/releases/latest).
 2. Extract the entire ZIP, keeping the `app` and `runtime` folders beside **Card Vault.exe**.
-3. Run **Card Vault.exe**, check the detected game and save folders, and click **Retrieve / refresh assets**.
+3. Run **Card Vault.exe** and check the detected game and save folders. **On your first run, click Retrieve / refresh assets** and wait for retrieval to finish.
 4. Click **Open Card Vault**. Your tracker opens in the browser; keep the launcher open while using it.
+
+The launcher detects a missing asset cache. If you click **Open Card Vault** before retrieving assets, it starts retrieval automatically and opens the tracker after it succeeds. Refresh assets again after a game update.
 
 Everything needed to run the app is bundled. The launcher checks for new releases and offers a download link; close it before switching to the newly extracted version. Your collection history and drafts are kept separately and carry over.
 

@@ -22,3 +22,6 @@ GitHub-hosted Windows tests and the clean package build passed. The v0.1.0 tag s
 
 60 Node tests cover collection bucket reconciliation, shop expansion tiers, merchandise locations and market-price rounding, missing catalog data, and itemized net-worth totals. The economy extractor was run against the local installation. Browser checks verified the named merchandise drilldown, quantity/unit/total columns, and the hover-triggered rainbow-wave animation. Valuation assumptions are documented in [Net worth](valuation.md).
 
+
+The subsequent v0.1.0 UI refresh adds compact inline W–L, deck export icons, live card-preview deck counts, stable shortage controls, safer modal backdrop handling, and a seamless repeating foil wave. Browser checks verified these interactions. Reflection checks against the packaged launcher's actual CacheReady method reject empty caches, missing renderer metadata, legacy catalogs and malformed catalog JSON; a current cache is accepted. Open automatically retrieves when this check fails.
+
