@@ -40,6 +40,8 @@ foreach($name in @('app.js','card-renderer.js','index.html','style.css','fonts')
 foreach($name in @('retrieve_assets.py','extract_catalog.py','render_assets.py','economy_assets.py')) { Copy-Item -LiteralPath (Join-Path $vaultRoot "tools\$name") -Destination "$app\tools" }
 Copy-Item -LiteralPath (Join-Path $vaultRoot 'THIRD_PARTY_NOTICES.md') -Destination $package
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'START-HERE.txt') -Destination $package
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Uninstall-CardVault.ps1') -Destination $package
+'CardVault portable package' | Set-Content -LiteralPath (Join-Path $package 'card-vault-package.txt') -Encoding ASCII
 $version=(Get-Content -LiteralPath (Join-Path $vaultRoot 'package.json') | ConvertFrom-Json).version
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Use a numeric major.minor.patch release version.' }
 $icon=Join-Path $build 'card-vault.ico'

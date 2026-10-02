@@ -33,14 +33,14 @@ class CardVault : Form {
         Application.Run(new CardVault());
     }
     CardVault() {
-        Text="Card Vault"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); ClientSize=new Size(760,565); MinimumSize=new Size(650,590); StartPosition=FormStartPosition.CenterScreen;
+        Text="Card Vault"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath); ClientSize=new Size(760,595); MinimumSize=new Size(650,620); StartPosition=FormStartPosition.CenterScreen;
         Font=new Font("Segoe UI",10); BackColor=Color.FromArgb(244,245,239); ForeColor=Color.FromArgb(32,54,46);
         Directory.CreateDirectory(store);
         var layout=new TableLayoutPanel {Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=9};
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute,52));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,44));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,60));
         layout.RowStyles.Add(new RowStyle(SizeType.Absolute,52));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,30));
-        layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,40));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,24));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,70));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,24));
         Controls.Add(layout);
         layout.Controls.Add(new Label {Text="Card Vault",Font=new Font("Segoe UI",24,FontStyle.Bold),AutoSize=true});
         layout.Controls.Add(new Label {Text="Your local card companion. Choose your folders once, retrieve artwork, then open the tracker.",Dock=DockStyle.Fill});
@@ -55,13 +55,14 @@ class CardVault : Form {
         log=new TextBox {Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,Dock=DockStyle.Fill,BackColor=Color.White,Font=new Font("Segoe UI",9)};layout.Controls.Add(log);
         var footer=new FlowLayoutPanel {Dock=DockStyle.Fill};
         var files=new Button {Text="Open my Card Vault data folder",AutoSize=true};files.Click+=(s,e)=>Process.Start(new ProcessStartInfo(store){UseShellExecute=true});footer.Controls.Add(files);
-        updates=new Button {Text="Check for updates",AutoSize=true};updates.Click+=async(s,e)=>{if(releaseUrl!=null)Process.Start(new ProcessStartInfo(releaseUrl){UseShellExecute=true});else await CheckUpdates();};footer.Controls.Add(updates);layout.Controls.Add(footer);
+        updates=new Button {Text="Check for updates",AutoSize=true};updates.Click+=async(s,e)=>{if(releaseUrl!=null)Process.Start(new ProcessStartInfo(releaseUrl){UseShellExecute=true});else await CheckUpdates();};footer.Controls.Add(updates);
+        var uninstall=new Button {Text="Uninstall…",AutoSize=true,ForeColor=Color.DarkRed};uninstall.Click+=(s,e)=>Uninstall();footer.Controls.Add(uninstall);layout.Controls.Add(footer);
         layout.Controls.Add(new Label {Text="Game saves stay untouched. Keep this launcher open while using the tracker.",AutoSize=true,Font=new Font("Segoe UI",9)});
         retrieve.Click+=async(s,e)=>await Retrieve();open.Click+=async(s,e)=>await Open();
         Shown+=async(s,e)=>{
             var updateTask=CheckUpdates();
             if(game.Text.Length==0){try {var found=await RunPython("--detect-only",false);if(found.Trim().Length>0)game.Text=found.Trim();}catch {Write("Choose the folder containing Card Shop Simulator_Data.");}}
-            Write(CacheReady()?"Ready. Click Open Card Vault. Refresh assets after a game update.":"Setup or asset refresh needed. Click Retrieve / refresh assets to include artwork and net-worth prices.");
+            Write(CacheReady()?"Ready. Click Open Card Vault. Asset refresh is manual: keep your current cache after a game update until you are ready to refresh.":"Setup or asset refresh needed. Click Retrieve / refresh assets to include artwork and net-worth prices.");
         };
         FormClosing+=(s,e)=>{if(working){MessageBox.Show("Wait for asset retrieval to finish before closing.","Card Vault");e.Cancel=true;}else StopServer();};
     }
@@ -146,6 +147,23 @@ class CardVault : Form {
             }
             Process.Start(new ProcessStartInfo(url){UseShellExecute=true});Write("Tracker opened. Closing this launcher stops its local server.");
         }catch(Exception ex){StopServer();Write(ex.Message);MessageBox.Show(ex.Message,"Card Vault could not start");}finally{open.Enabled=true;}
+    }
+    void Uninstall() {
+        if(working){MessageBox.Show("Wait for asset retrieval to finish before uninstalling.","Card Vault");return;}
+        var expected=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CardVault");
+        if(!String.Equals(Path.GetFullPath(store).TrimEnd('\\'),Path.GetFullPath(expected).TrimEnd('\\'),StringComparison.OrdinalIgnoreCase)||!File.Exists(Path.Combine(root,"card-vault-package.txt"))){MessageBox.Show("Automatic uninstall is available for the packaged app with its standard data folder. Remove this custom installation manually.","Card Vault");return;}
+        if(MessageBox.Show("Uninstall Card Vault and permanently delete its artwork cache, drafts, records, settings and sync history?\n\nApp: "+root+"\nData: "+store+"\n\nGame files and game saves will stay untouched. Other extracted copies of Card Vault will remain.","Uninstall Card Vault",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
+        try {
+            var id=Guid.NewGuid().ToString("N");
+            var helper=Path.Combine(Path.GetTempPath(),"CardVault-uninstall-"+id+".ps1");
+            var plan=Path.Combine(Path.GetTempPath(),"CardVault-uninstall-"+id+".json");
+            File.Copy(Path.Combine(root,"Uninstall-CardVault.ps1"),helper);
+            File.WriteAllText(plan,new JavaScriptSerializer().Serialize(new {app=root,data=store,game=game.Text.Trim(),saves=saves.Text.Trim(),process=Process.GetCurrentProcess().Id}));
+            var powershell=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),@"WindowsPowerShell\v1.0\powershell.exe");
+            StopServer();
+            Process.Start(new ProcessStartInfo(powershell,"-NoProfile -ExecutionPolicy Bypass -File "+Quote(helper)+" -PlanPath "+Quote(plan)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+            Close();
+        }catch(Exception ex){MessageBox.Show("Could not start uninstall: "+ex.Message,"Card Vault");}
     }
     void StopServer(){if(server!=null){try{if(!server.HasExited)server.Kill();}catch{}server.Dispose();server=null;url=null;}}
 }

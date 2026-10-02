@@ -25,6 +25,9 @@ jobs:
           if ('${{ github.ref_type }}' -eq 'tag' -and '${{ github.ref_name }}' -ne "v$version") { throw 'Tag must match package.json version' }
       - run: npm test
       - run: python -m unittest discover -s tests -p test_asset_setup.py
+      - name: Check uninstall safety
+        shell: powershell
+        run: ./tests/uninstall.test.ps1
       - name: Build portable app
         shell: powershell
         run: ./desktop/Build-Windows.ps1 -PythonCommand python

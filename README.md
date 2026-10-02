@@ -17,7 +17,9 @@ Both paths require Windows, a locally installed copy of TCG Card Shop Simulator,
 3. Run **Card Vault.exe** and check the detected game and save folders. **On your first run, click Retrieve / refresh assets** and wait for retrieval to finish.
 4. Click **Open Card Vault**. Your tracker opens in the browser; keep the launcher open while using it.
 
-The launcher detects a missing asset cache. If you click **Open Card Vault** before retrieving assets, it starts retrieval automatically and opens the tracker after it succeeds. Refresh assets again after a game update.
+The launcher detects a missing asset cache. If you click **Open Card Vault** before retrieving assets, it starts retrieval automatically and opens the tracker after it succeeds. Existing assets are not automatically refreshed after a game update. Keep your current cache until Card Vault supports the update, then click **Retrieve / refresh assets** when you are ready. Checking GitHub for app updates does not replace your asset cache.
+
+To remove Card Vault, click **Uninstall…** in the launcher and confirm. This removes that app copy and your local Card Vault data, including drafts and history. Your game installation and game saves are kept.
 
 Everything needed to run the app is bundled. The launcher checks for new releases and offers a download link; close it before switching to the newly extracted version. Your collection history and drafts are kept separately and carry over.
 
@@ -31,7 +33,7 @@ cd card-vault-tcgcardshop-tracker
 .\"Start Card Vault.cmd"
 ```
 
-The startup script retrieves game assets on first use and opens the local tracker. After a game update, run **Retrieve Game Assets.cmd** to refresh the artwork and catalog. See the [setup reference](docs/reference.md#setup-on-another-windows-pc--refresh-game-assets) for custom folders and troubleshooting.
+The startup script retrieves game assets on first use and opens the local tracker. After a game update, you can keep using the existing cache; run **Retrieve Game Assets.cmd** when you are ready to refresh the artwork and catalog. See the [setup reference](docs/reference.md#setup-on-another-windows-pc--refresh-game-assets) for custom folders and troubleshooting.
 
 ## Explore your collection
 

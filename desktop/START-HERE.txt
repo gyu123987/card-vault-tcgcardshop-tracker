@@ -13,7 +13,11 @@ You can create a Windows shortcut to Card Vault.exe for quick access.
 Own and install TCG Card Shop Simulator first. The package contains no game
 artwork, save files, personal history, or sample decks. Assets are read from
 your installed game. Game saves are never modified. After a game update,
-click Retrieve / refresh assets again, then reopen the tracker.
+your existing assets are kept. Refresh manually when Card Vault supports
+the update and you are ready. Checking for app updates does not refresh assets.
+
+To remove this app and all your Card Vault data, click Uninstall in the
+launcher and confirm. Drafts and history are deleted; game saves are kept.
 
 Your data is stored in %LOCALAPPDATA%\CardVault, separately from this app.
 Use Open my Card Vault data folder in the launcher to back up your data.
