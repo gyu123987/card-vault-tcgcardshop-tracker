@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {parseOwnedRule} from '../lib/model.mjs';
+test('owned search comparison accepts whole copy thresholds and rejects invalid input',()=>{assert.deepEqual(parseOwnedRule(' owned > 3 '),{ownedAbove:3});assert.deepEqual(parseOwnedRule('OWNED>0'),{ownedAbove:0});for(const query of ['owned > -1','owned > 3.5','owned > 9007199254740992','owned card','fire > 10'])assert.equal(parseOwnedRule(query),null);});
 import {normalize,priceOf,validateDraft,validateCover,DISPLAY_TYPES,signature,exportDeck,reconcile,allocate} from '../lib/model.mjs';
 const sets=[{id:'Tetramon',suffix:'',expansion:0,monsterOrder:[1]},{id:'Ascension',suffix:'Ascension',expansion:7,monsterOrder:[1]},{id:'Ghost',suffix:'Ghost',expansion:2,isDestiny:false,monsterOrder:[1]},{id:'GhostBlack',suffix:'GhostBlack',expansion:2,isDestiny:true,monsterOrder:[1]}];
 const cards=[{id:'Tetramon:0',setId:'Tetramon',baseId:'1',monsterId:1,expansion:0,saveIndex:0,name:'Pigni'},{id:'Tetramon:6',setId:'Tetramon',baseId:'1',monsterId:1,expansion:0,saveIndex:6,name:'Pigni'},{id:'Ascension:0',setId:'Ascension',baseId:'1',monsterId:1,expansion:7,saveIndex:0,name:'Pigni'}, {id:'Ghost:1',setId:'Ghost',baseId:'1',monsterId:1,expansion:2,isDestiny:false,saveIndex:1,name:'Pigni'}, {id:'GhostBlack:1',setId:'GhostBlack',baseId:'1',monsterId:1,expansion:2,isDestiny:true,saveIndex:1,name:'Pigni'}];
