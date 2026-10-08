@@ -4,8 +4,14 @@ $vaultRoot = $PSScriptRoot
 $vaultPython = Join-Path $vaultRoot '.tools\asset-env\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $vaultPython)) {
     $launcher = Get-Command py -ErrorAction SilentlyContinue
-    if (-not $launcher) { throw 'Install Python 3.12 from python.org with the Python launcher, then retry Retrieve Game Assets.cmd.' }
-    & $launcher.Source -3.12 -m venv (Join-Path $vaultRoot '.tools\asset-env')
+    if ($launcher) { & $launcher.Source -3.12 -m venv (Join-Path $vaultRoot '.tools\asset-env') }
+    else {
+        $launcher=Get-Command python -ErrorAction SilentlyContinue
+        if (-not $launcher) { throw 'Install Python 3.12 from python.org, then retry Retrieve Game Assets.cmd.' }
+        & $launcher.Source -c 'import sys; assert sys.version_info[:2] == (3,12), "Python 3.12 is required"'
+        if ($LASTEXITCODE -ne 0) {throw 'Python 3.12 is required.'}
+        & $launcher.Source -m venv (Join-Path $vaultRoot '.tools\asset-env')
+    }
     if ($LASTEXITCODE -ne 0) { throw 'Python 3.12 is required. Install it from python.org and retry.' }
 }
 Write-Host 'Preparing local asset tools from PyPI. Game artwork is read only from your installation.'

@@ -5,12 +5,15 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {normalize,validateDraft,reconcile,exportDeck,signature,validateCover,validateRecord} from './lib/model.mjs';
+import {resolveHistoryProfile} from './lib/save-identity.mjs';
 const root=path.dirname(fileURLToPath(import.meta.url)), data=process.env.TCG_DATA_DIR||path.join(root,'data');
 const saveDir=process.env.TCG_SAVE_DIR||path.join(os.homedir(),'AppData/LocalLow/OPNeonGames/Card Shop Simulator');
 let port=Number(process.env.PORT||4317);const host='127.0.0.1';
 await fs.mkdir(data,{recursive:true});
 const catalog=JSON.parse(await fs.readFile(path.join(data,'catalog.json'),'utf8'));
 let state=null,activeFile='savedGames_Release0.json',drafts=[],snapshots=[],deckCovers={};
+let historyProfiles={};
+try{historyProfiles=JSON.parse(await fs.readFile(path.join(data,'history-profiles.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 try{deckCovers=JSON.parse(await fs.readFile(path.join(data,'deck-covers.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 try{drafts=JSON.parse(await fs.readFile(path.join(data,'drafts.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
 try{snapshots=JSON.parse(await fs.readFile(path.join(data,'snapshots.json'),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
@@ -21,18 +24,19 @@ async function sync(file=activeFile,record=false){
  const src=path.join(saveDir,file);let parsed,stat;
  for(let i=0;i<3;i++){try{const before=await fs.stat(src);parsed=JSON.parse(await fs.readFile(src,'utf8'));stat=await fs.stat(src);if(before.mtimeMs!==stat.mtimeMs||before.size!==stat.size)throw Error('Save is being written.');break;}catch(e){if(i===2)throw e;await new Promise(r=>setTimeout(r,200));}}
  const next=normalize(parsed,catalog);next.saveFile=file;next.modified=stat.mtime.toISOString();next.synced=new Date().toISOString();
+ const history=resolveHistoryProfile(parsed,saveDir,file,historyProfiles);next.historyProfile=history.id;next.historyBasis=history.basis;await atomic('history-profiles.json',historyProfiles);
  const profile=file; // Drafts are scoped to the selected save slot.
  const selected=drafts.filter(d=>d.profile===profile), updated=reconcile(selected,next.decks);
  drafts=drafts.filter(d=>d.profile!==profile).concat(updated);await atomic('drafts.json',drafts);
  const hash=crypto.createHash('sha256').update(JSON.stringify([next.cards.map(c=>[c.owned,c.price,c.value]),next.permanentReport.duelWinCount??null])).digest('hex');
- if(record||!snapshots.some(s=>s.valuationVersion===3&&s.file===file&&s.hash===hash&&s.day===next.day&&(s.gameMinute??null)===next.gameMinute&&s.duelWins===(next.permanentReport.duelWinCount??null))){
-  snapshots.push({valuationVersion:3,file,hash,day:next.day,gameMinute:next.gameMinute,at:next.synced,duelWins:next.permanentReport.duelWinCount??null,value:next.cards.reduce((n,c)=>n+c.value,0),copies:next.cards.reduce((n,c)=>n+c.owned,0)});await atomic('snapshots.json',snapshots);
+ if(record||!snapshots.some(s=>s.valuationVersion===3&&s.historyProfile===history.id&&s.hash===hash&&s.day===next.day&&(s.gameMinute??null)===next.gameMinute&&s.duelWins===(next.permanentReport.duelWinCount??null))){
+  snapshots.push({valuationVersion:3,historyProfile:history.id,file,hash,day:next.day,gameMinute:next.gameMinute,at:next.synced,duelWins:next.permanentReport.duelWinCount??null,value:next.cards.reduce((n,c)=>n+c.value,0),copies:next.cards.reduce((n,c)=>n+c.owned,0)});await atomic('snapshots.json',snapshots);
  }
  activeFile=file;state=next;return payload();
 }
 function withCover(d){const backup=d.source==='game'?drafts.find(x=>x.profile===activeFile&&x.gameId===d.id):d;return {...d,record:backup?.record||{wins:0,losses:0},coverCardIds:deckCovers[activeFile+'|'+signature(d.entries)]||d.coverCardIds||[]};}
 function nextGameSignature(sig){return state.decks.some(g=>signature(g.entries)===sig);}
-function payload(){return {...state,decks:state.decks.map(withCover),drafts:drafts.filter(d=>d.profile===activeFile).map(withCover),snapshots:snapshots.filter(s=>s.file===activeFile&&s.valuationVersion===3),catalogSource:catalog.source};}
+function payload(){return {...state,decks:state.decks.map(withCover),drafts:drafts.filter(d=>d.profile===activeFile).map(withCover),snapshots:snapshots.filter(s=>s.historyProfile===state.historyProfile&&s.valuationVersion===3),legacySnapshotCount:snapshots.filter(s=>!s.historyProfile&&s.file===activeFile).length,catalogSource:catalog.source};}
 try{const available=await saves();await sync(available.some(s=>s.name===activeFile)?activeFile:available[0]?.name);}catch(e){console.error('Initial sync:',e.message);}
 async function body(req){let result='';for await(const chunk of req){result+=chunk;if(result.length>1e6)throw Error('Request is too large.');}return JSON.parse(result||'{}');}
 const types={'.ttf':'font/ttf','.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.webp':'image/webp','.svg':'image/svg+xml'};

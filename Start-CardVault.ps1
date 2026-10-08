@@ -1,17 +1,30 @@
+param([switch]$BuildOnly)
 $ErrorActionPreference = 'Stop'
 $vaultRoot = $PSScriptRoot
-$vaultUrl = 'http://127.0.0.1:4317'
-New-Item -ItemType Directory -Path (Join-Path $vaultRoot 'data') -Force | Out-Null
-if (-not (Test-Path -LiteralPath (Join-Path $vaultRoot 'data/catalog.json')) -or -not (Test-Path -LiteralPath (Join-Path $vaultRoot 'public/assets/render-data.json'))) {
-    Write-Host 'First run: retrieving card assets from your installed game.'
-    & (Join-Path $vaultRoot 'Retrieve-GameAssets.ps1')
+$vaultNode = (Get-Command node -ErrorAction Stop).Source
+$vaultPython = Join-Path $vaultRoot '.tools\asset-env\Scripts\python.exe'
+$vaultPythonArgs = ''
+if (-not (Test-Path -LiteralPath $vaultPython)) {
+    $vaultPy = Get-Command py -ErrorAction SilentlyContinue
+    if ($vaultPy) { $vaultPython=$vaultPy.Source; $vaultPythonArgs='-3.12' }
+    else { $vaultPython=(Get-Command python -ErrorAction Stop).Source }
 }
-try { $null = Invoke-RestMethod "$vaultUrl/api/state" -TimeoutSec 2 } catch {
-    $vaultNode = (Get-Command node -ErrorAction Stop).Source
-    Start-Process -FilePath $vaultNode -ArgumentList 'server.mjs' -WorkingDirectory $vaultRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $vaultRoot 'data/server.log') -RedirectStandardError (Join-Path $vaultRoot 'data/server-error.log')
-    for ($attempt = 0; $attempt -lt 30; $attempt++) {
-        Start-Sleep -Milliseconds 300
-        try { $null = Invoke-RestMethod "$vaultUrl/api/state" -TimeoutSec 2; break } catch { if ($attempt -eq 29) { throw 'Card Vault could not start. Check data/server-error.log.' } }
-    }
-}
-Start-Process $vaultUrl
+$vaultBuild = Join-Path $vaultRoot '.tools\source-launcher'
+New-Item -ItemType Directory -Path $vaultBuild -Force | Out-Null
+$vaultVersion=(Get-Content -LiteralPath (Join-Path $vaultRoot 'package.json') | ConvertFrom-Json).version
+if ($vaultVersion -notmatch '^\d+\.\d+\.\d+$') {throw 'Use a numeric major.minor.patch version.'}
+$vaultVersionFile=Join-Path $vaultBuild 'Version.cs'
+@('using System.Reflection;',"[assembly: AssemblyVersion(`"$vaultVersion.0`")]","[assembly: AssemblyInformationalVersion(`"$vaultVersion`")]") | Set-Content -LiteralPath $vaultVersionFile -Encoding UTF8
+$vaultExe=Join-Path $vaultBuild 'Card Vault.exe'
+$vaultIcon=Join-Path $vaultBuild 'card-vault.ico'
+& (Join-Path $vaultRoot 'desktop\Generate-Icon.ps1') -Output $vaultIcon
+$vaultCompiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+& $vaultCompiler /nologo /target:winexe /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Web.Extensions.dll "/win32icon:$vaultIcon" "/out:$vaultExe" $vaultVersionFile (Join-Path $vaultRoot 'desktop\CardVault.cs')
+if ($LASTEXITCODE -ne 0) { throw 'Could not build the source launcher. Close any running Card Vault launcher and retry.' }
+if ($BuildOnly) {Write-Output $vaultExe;return}
+$env:CARD_VAULT_SOURCE_ROOT=$vaultRoot
+$env:CARD_VAULT_SOURCE_NODE=$vaultNode
+$env:CARD_VAULT_SOURCE_PYTHON=$vaultPython
+$env:CARD_VAULT_SOURCE_PYTHON_ARGS=$vaultPythonArgs
+$env:CARD_VAULT_HOME=Join-Path $vaultRoot 'data'
+Start-Process -FilePath $vaultExe -WorkingDirectory $vaultRoot

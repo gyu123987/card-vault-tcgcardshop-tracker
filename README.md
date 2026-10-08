@@ -21,6 +21,8 @@ The launcher detects a missing asset cache. If you click **Open Card Vault** bef
 
 To remove Card Vault, click **Uninstall…** in the launcher and confirm. This removes that app copy and your local Card Vault data, including drafts and history. Your game installation and game saves are kept.
 
+Sync charts are grouped by playthrough using the game's initial random card prices. Save slots and backups from the same playthrough share history; a new game's history is separate. Older observations without that fingerprint remain saved in `snapshots.json` but are excluded from the new charts because their playthrough cannot be verified. Drafts remain separate by save slot.
+
 Everything needed to run the app is bundled. The launcher checks for new releases and offers a download link; close it before switching to the newly extracted version. Your collection history and drafts are kept separately and carry over.
 
 ### Clone the repository — alternative
@@ -33,7 +35,9 @@ cd card-vault-tcgcardshop-tracker
 .\"Start Card Vault.cmd"
 ```
 
-The startup script retrieves game assets on first use and opens the local tracker. After a game update, you can keep using the existing cache; run **Retrieve Game Assets.cmd** when you are ready to refresh the artwork and catalog. See the [setup reference](docs/reference.md#setup-on-another-windows-pc--refresh-game-assets) for custom folders and troubleshooting.
+The startup script opens the launcher. Retrieve assets on first use, then click **Open Card Vault**. After a game update, you can keep using the existing cache and refresh manually when you are ready. **Retrieve Game Assets.cmd** also remains available. See the [setup reference](docs/reference.md#setup-on-another-windows-pc--refresh-game-assets) for custom folders and troubleshooting.
+
+**Start Card Vault.cmd** opens the same Windows launcher using your installed Node.js and Python, with folder selection, **Retrieve / refresh assets**, **Open Card Vault**, **Check for updates**, and confirmed **Uninstall** options. Source uninstall removes local data, cached artwork and extraction tools; it keeps your source code, Git history, and installed Node.js/Python. Update checks open the GitHub release page; update a clone using Git when you want to use newer source code. Running `npm start` still starts the server directly.
 
 ## Explore your collection
 

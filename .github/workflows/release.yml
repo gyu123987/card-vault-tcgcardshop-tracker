@@ -28,6 +28,11 @@ jobs:
       - name: Check uninstall safety
         shell: powershell
         run: ./tests/uninstall.test.ps1
+      - name: Check source launcher and cleanup
+        shell: powershell
+        run: |
+          ./Start-CardVault.ps1 -BuildOnly
+          ./tests/source-uninstall.test.ps1
       - name: Build portable app
         shell: powershell
         run: ./desktop/Build-Windows.ps1 -PythonCommand python

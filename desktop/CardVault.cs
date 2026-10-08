@@ -12,8 +12,10 @@ using System.Windows.Forms;
 
 // Small native launcher. All card data remains on this machine.
 class CardVault : Form {
-    readonly string root = AppDomain.CurrentDomain.BaseDirectory;
+    readonly bool sourceMode = !String.IsNullOrEmpty(Environment.GetEnvironmentVariable("CARD_VAULT_SOURCE_ROOT"));
+    readonly string root = Environment.GetEnvironmentVariable("CARD_VAULT_SOURCE_ROOT") ?? AppDomain.CurrentDomain.BaseDirectory;
     readonly string store = Environment.GetEnvironmentVariable("CARD_VAULT_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CardVault");
+    string CacheRoot { get { return sourceMode?root:store; } }
     TextBox game, saves, log;
     Button retrieve, open;
     Process server;
@@ -97,10 +99,10 @@ class CardVault : Form {
     string ReadSetting(string file){var p=Path.Combine(store,file);return File.Exists(p)?File.ReadAllText(p):"";}
     void Settings(){File.WriteAllText(Path.Combine(store,"game-folder.txt"),game.Text.Trim());File.WriteAllText(Path.Combine(store,"save-folder.txt"),saves.Text.Trim());}
     bool CacheReady(){
-        if(!File.Exists(Path.Combine(store,"data/catalog.json"))||!File.Exists(Path.Combine(store,"public/assets/render-data.json")))return false;
+        if(!File.Exists(Path.Combine(CacheRoot,"data/catalog.json"))||!File.Exists(Path.Combine(CacheRoot,"public/assets/render-data.json")))return false;
         try {
             var json=new JavaScriptSerializer {MaxJsonLength=32*1024*1024};
-            var catalog=json.Deserialize<Dictionary<string,object>>(File.ReadAllText(Path.Combine(store,"data/catalog.json")));
+            var catalog=json.Deserialize<Dictionary<string,object>>(File.ReadAllText(Path.Combine(CacheRoot,"data/catalog.json")));
             var economy=catalog.ContainsKey("economy")?catalog["economy"] as Dictionary<string,object>:null;
             return economy!=null&&economy.ContainsKey("items");
         }catch {return false;}
@@ -108,7 +110,9 @@ class CardVault : Form {
     void Write(string text){if(IsDisposed||String.IsNullOrWhiteSpace(text))return;if(InvokeRequired){BeginInvoke(new Action<string>(Write),text);return;}log.AppendText(text+Environment.NewLine);}
     static string Quote(string s){return "\""+s.Replace("\"", "") .TrimEnd('\\')+"\"";}
     async Task<string> RunPython(string args,bool show) {
-        var info=new ProcessStartInfo(Path.Combine(root,"runtime/python/python.exe"),"-u "+Quote(Path.Combine(root,"app/tools/retrieve_assets.py"))+" "+args){WorkingDirectory=Path.Combine(root,"app"),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+        var program=sourceMode?Environment.GetEnvironmentVariable("CARD_VAULT_SOURCE_PYTHON"):Path.Combine(root,"runtime/python/python.exe");
+        var prefix=sourceMode?Environment.GetEnvironmentVariable("CARD_VAULT_SOURCE_PYTHON_ARGS")+" ":"";
+        var info=new ProcessStartInfo(program,prefix+"-u "+Quote(Path.Combine(root,sourceMode?"tools/retrieve_assets.py":"app/tools/retrieve_assets.py"))+" "+args){WorkingDirectory=sourceMode?root:Path.Combine(root,"app"),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
         using(var process=new Process {StartInfo=info}) {
             var output=new StringBuilder();var errors=new StringBuilder();
             process.OutputDataReceived+=(s,e)=>{if(e.Data!=null){lock(output)output.AppendLine(e.Data);if(show)Write(e.Data);}};
@@ -122,7 +126,7 @@ class CardVault : Form {
         if(!File.Exists(Path.Combine(game.Text.Trim(),"Card Shop Simulator_Data/sharedassets1.assets"))){MessageBox.Show("Choose the game installation folder containing Card Shop Simulator_Data.","Game folder needed");return false;}
         working=true;retrieve.Enabled=false;open.Enabled=false;game.Enabled=false;saves.Enabled=false;
         StopServer();Write("Retrieving artwork from your installed game. This can take several minutes…");
-        try {Settings();await RunPython("--game "+Quote(game.Text.Trim())+" --output "+Quote(store),true);Write("Assets ready. Click Open Card Vault.");return true;}
+        try {Settings();if(sourceMode)await RetrieveSource();else await RunPython("--game "+Quote(game.Text.Trim())+" --output "+Quote(store),true);Write("Assets ready. Click Open Card Vault.");return true;}
         catch(Exception ex){Write(ex.Message);MessageBox.Show("Retrieval did not finish. Your previous cache and game saves are unchanged. See the progress log for details.","Card Vault");return false;}
         finally {working=false;retrieve.Enabled=true;open.Enabled=true;game.Enabled=true;saves.Enabled=true;}
     }
@@ -136,8 +140,8 @@ class CardVault : Form {
             if(server==null||server.HasExited){
                 open.Enabled=false;
                 var ready=new TaskCompletionSource<string>();
-                var info=new ProcessStartInfo(Path.Combine(root,"runtime/node/node.exe"),Quote(Path.Combine(root,"app/server.mjs"))){WorkingDirectory=Path.Combine(root,"app"),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
-                info.EnvironmentVariables["TCG_DATA_DIR"]=Path.Combine(store,"data");info.EnvironmentVariables["TCG_ASSET_DIR"]=Path.Combine(store,"public/assets");info.EnvironmentVariables["TCG_SAVE_DIR"]=saves.Text.Trim();info.EnvironmentVariables["PORT"]="4318";runningSave=saves.Text.Trim();
+                var info=new ProcessStartInfo(sourceMode?Environment.GetEnvironmentVariable("CARD_VAULT_SOURCE_NODE"):Path.Combine(root,"runtime/node/node.exe"),Quote(Path.Combine(root,sourceMode?"server.mjs":"app/server.mjs"))){WorkingDirectory=sourceMode?root:Path.Combine(root,"app"),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+                info.EnvironmentVariables["TCG_DATA_DIR"]=sourceMode?store:Path.Combine(store,"data");info.EnvironmentVariables["TCG_ASSET_DIR"]=Path.Combine(CacheRoot,"public/assets");info.EnvironmentVariables["TCG_SAVE_DIR"]=saves.Text.Trim();info.EnvironmentVariables["PORT"]=sourceMode?"4317":"4318";runningSave=saves.Text.Trim();
                 server=new Process {StartInfo=info,EnableRaisingEvents=true};
                 server.OutputDataReceived+=(s,e)=>{if(e.Data!=null){Write(e.Data);var marker="Card Vault ready at ";if(e.Data.StartsWith(marker))ready.TrySetResult(e.Data.Substring(marker.Length));}};
                 server.ErrorDataReceived+=(s,e)=>Write(e.Data);server.Exited+=(s,e)=>ready.TrySetException(new Exception("The local server stopped. Check the log."));
@@ -150,6 +154,7 @@ class CardVault : Form {
     }
     void Uninstall() {
         if(working){MessageBox.Show("Wait for asset retrieval to finish before uninstalling.","Card Vault");return;}
+        if(sourceMode){UninstallSource();return;}
         var expected=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CardVault");
         if(!String.Equals(Path.GetFullPath(store).TrimEnd('\\'),Path.GetFullPath(expected).TrimEnd('\\'),StringComparison.OrdinalIgnoreCase)||!File.Exists(Path.Combine(root,"card-vault-package.txt"))){MessageBox.Show("Automatic uninstall is available for the packaged app with its standard data folder. Remove this custom installation manually.","Card Vault");return;}
         if(MessageBox.Show("Uninstall Card Vault and permanently delete its artwork cache, drafts, records, settings and sync history?\n\nApp: "+root+"\nData: "+store+"\n\nGame files and game saves will stay untouched. Other extracted copies of Card Vault will remain.","Uninstall Card Vault",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
@@ -163,6 +168,23 @@ class CardVault : Form {
             StopServer();
             Process.Start(new ProcessStartInfo(powershell,"-NoProfile -ExecutionPolicy Bypass -File "+Quote(helper)+" -PlanPath "+Quote(plan)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
             Close();
+        }catch(Exception ex){MessageBox.Show("Could not start uninstall: "+ex.Message,"Card Vault");}
+    }
+    async Task RetrieveSource() {
+        var info=new ProcessStartInfo("powershell.exe","-NoProfile -ExecutionPolicy Bypass -File "+Quote(Path.Combine(root,"Retrieve-GameAssets.ps1"))+" -GameDirectory "+Quote(game.Text.Trim())){WorkingDirectory=root,UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
+        using(var process=new Process {StartInfo=info}){
+            process.OutputDataReceived+=(s,e)=>Write(e.Data);process.ErrorDataReceived+=(s,e)=>Write(e.Data);
+            process.Start();process.BeginOutputReadLine();process.BeginErrorReadLine();await Task.Run(()=>process.WaitForExit());
+            if(process.ExitCode!=0)throw new Exception("Asset retrieval failed. See the progress log.");
+        }
+    }
+    void UninstallSource() {
+        if(MessageBox.Show("Remove this source installation's Card Vault data, artwork cache and local asset tools? Drafts, records and sync history will be permanently deleted.\n\nFolder: "+root+"\n\nSource code, Git history, other files, installed Node/Python, and game files/saves are kept.","Uninstall source setup",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
+        try{
+            var id=Guid.NewGuid().ToString("N");var helper=Path.Combine(Path.GetTempPath(),"CardVault-source-uninstall-"+id+".ps1");var plan=Path.Combine(Path.GetTempPath(),"CardVault-source-uninstall-"+id+".json");
+            File.Copy(Path.Combine(root,"desktop/Uninstall-Source.ps1"),helper);
+            File.WriteAllText(plan,new JavaScriptSerializer().Serialize(new {app=root,game=game.Text.Trim(),saves=saves.Text.Trim(),process=Process.GetCurrentProcess().Id}));
+            StopServer();Process.Start(new ProcessStartInfo("powershell.exe","-NoProfile -ExecutionPolicy Bypass -File "+Quote(helper)+" -PlanPath "+Quote(plan)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});Close();
         }catch(Exception ex){MessageBox.Show("Could not start uninstall: "+ex.Message,"Card Vault");}
     }
     void StopServer(){if(server!=null){try{if(!server.HasExited)server.Kill();}catch{}server.Dispose();server=null;url=null;}}
