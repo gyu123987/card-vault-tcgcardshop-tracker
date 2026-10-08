@@ -37,7 +37,7 @@ cd card-vault-tcgcardshop-tracker
 
 The startup script opens the launcher. Retrieve assets on first use, then click **Open Card Vault**. After a game update, you can keep using the existing cache and refresh manually when you are ready. **Retrieve Game Assets.cmd** also remains available. See the [setup reference](docs/reference.md#setup-on-another-windows-pc--refresh-game-assets) for custom folders and troubleshooting.
 
-**Start Card Vault.cmd** opens the same Windows launcher using your installed Node.js and Python, with folder selection, **Retrieve / refresh assets**, **Open Card Vault**, **Check for updates**, and confirmed **Uninstall** options. Source uninstall removes local data, cached artwork and extraction tools; it keeps your source code, Git history, and installed Node.js/Python. Update checks open the GitHub release page; update a clone using Git when you want to use newer source code. Running `npm start` still starts the server directly.
+**Start Card Vault.cmd** opens the same Windows launcher using your installed Node.js and Python, with folder selection, **Retrieve / refresh assets**, **Open Card Vault**, **Check for updates**, and confirmed **Uninstall** options. Source uninstall deletes the entire project folder after the launcher closes, including source code, Git history, local data, cached artwork, tools, and any other files inside. Back up anything you want to keep before confirming. Installed Node.js/Python and game files/saves outside that folder are kept. Update checks open the GitHub release page; update a clone using Git when you want to use newer source code. Running `npm start` still starts the server directly.
 
 ## Explore your collection
 

@@ -179,12 +179,12 @@ class CardVault : Form {
         }
     }
     void UninstallSource() {
-        if(MessageBox.Show("Remove this source installation's Card Vault data, artwork cache and local asset tools? Drafts, records and sync history will be permanently deleted.\n\nFolder: "+root+"\n\nSource code, Git history, other files, installed Node/Python, and game files/saves are kept.","Uninstall source setup",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
+        if(MessageBox.Show("Permanently delete this entire Card Vault folder after the launcher closes?\n\nFolder: "+root+"\n\nThis includes source code, Git history, drafts, records, sync history, cached artwork, local tools, and ANY other files inside this folder. Back up anything you want to keep first.\n\nInstalled Node/Python, other Card Vault installations, and game files/saves outside this folder are kept.","Uninstall Card Vault completely",MessageBoxButtons.YesNo,MessageBoxIcon.Warning,MessageBoxDefaultButton.Button2)!=DialogResult.Yes)return;
         try{
             var id=Guid.NewGuid().ToString("N");var helper=Path.Combine(Path.GetTempPath(),"CardVault-source-uninstall-"+id+".ps1");var plan=Path.Combine(Path.GetTempPath(),"CardVault-source-uninstall-"+id+".json");
             File.Copy(Path.Combine(root,"desktop/Uninstall-Source.ps1"),helper);
-            File.WriteAllText(plan,new JavaScriptSerializer().Serialize(new {app=root,game=game.Text.Trim(),saves=saves.Text.Trim(),process=Process.GetCurrentProcess().Id}));
-            StopServer();Process.Start(new ProcessStartInfo("powershell.exe","-NoProfile -ExecutionPolicy Bypass -File "+Quote(helper)+" -PlanPath "+Quote(plan)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});Close();
+            File.WriteAllText(plan,new JavaScriptSerializer().Serialize(new {app=root,game=game.Text.Trim(),saves=saves.Text.Trim(),process=Process.GetCurrentProcess().Id,fullRemovalConfirmed=true}));
+            StopServer();Process.Start(new ProcessStartInfo("powershell.exe","-NoProfile -ExecutionPolicy Bypass -File "+Quote(helper)+" -PlanPath "+Quote(plan)){WorkingDirectory=Path.GetTempPath(),UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});Close();
         }catch(Exception ex){MessageBox.Show("Could not start uninstall: "+ex.Message,"Card Vault");}
     }
     void StopServer(){if(server!=null){try{if(!server.HasExited)server.Kill();}catch{}server.Dispose();server=null;url=null;}}
